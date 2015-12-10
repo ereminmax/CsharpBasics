@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 
 namespace Posobie
 {
@@ -22,10 +23,11 @@ namespace Posobie
             //SixRandom.justDoIt();
             //SevenEqual.justDoIt();
             //EightString.justDoIt();
-            //new NineClass().justDoIt();
+            //new NineClass().justDoIt(); // И ОДИННАДЦААТАЯ
             //TenInstance.justDoIt();
             //двенадцать
             //Тринадцать. Сдалать 9 с использованием коллекций. List
+            new TwelveThirteen("input.bat").justDoIt();
 
             Console.WriteLine("Press any key to continue . . . ");
             Console.ReadKey();
@@ -625,4 +627,105 @@ namespace Posobie
         }
     }
 
-}
+    // Задание 12 и 13
+    [Serializable]
+    class TwelveThirteen
+    {
+        private String fileName;
+        private List<HistoricalEvent> list;  
+        private HistoricalEvent[] ob;
+
+        public TwelveThirteen(String fileName) 
+        { 
+            this.fileName = fileName; 
+        }
+
+        public void justDoIt() 
+        {
+            // Загрузить файл
+            loadState();
+
+            // Логика
+            toDo();
+
+            // Сохранить файл
+            saveState();
+        }
+
+        private void toDo()
+        {
+            try
+            {
+                Console.WriteLine("Введи номера событий, у которых хочешь узнать разницу во времени");
+                int firstEvent = int.Parse(Console.ReadLine());
+                int secondEvent = int.Parse(Console.ReadLine());
+                // Andrew Throelsen page 341
+                // Коллекцию в массив
+                ob = list.ToArray();
+                Console.WriteLine(getDifference(firstEvent, secondEvent));
+
+                Console.WriteLine("Вывести события по следующей котегории: ");
+                String keyWord = Console.ReadLine();
+                searchArray(keyWord);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        private int getDifference(int firstEvent, int secondEvent)
+        {
+            if (firstEvent == 0 || secondEvent == 0) throw new Exception("Забыл ввести одно из чисел");
+            return Math.Abs(ob[firstEvent].getYear() - ob[secondEvent].getYear());
+        }
+
+        private void searchArray(String keyWord)
+        {
+            if (keyWord == "") throw new Exception("Забыл ввести ключевое слово");
+
+            for (int i = 0; i < ob.Length; i++)
+            {
+                if (ob[i].getCategory() == keyWord) Console.WriteLine(ob[i].getYear() + " " + ob[i].getTitle() + " " + ob[i].getCategory());
+            }
+        }
+
+        private void loadState()
+        {
+            FileInfo file = new FileInfo(fileName);
+
+            if (!file.Exists)
+            {
+                file.Create();
+                list = new List<HistoricalEvent>();
+                return;
+            }
+
+            try
+            {
+                FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                BinaryFormatter bf = new BinaryFormatter();
+                list = (List<HistoricalEvent>)bf.Deserialize(fs);
+                fs.Close();         
+            }
+            catch (SerializationException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        private void saveState()
+        {
+            try
+            {
+                FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                BinaryFormatter bf = new BinaryFormatter();
+                bf.Serialize(fs, list);
+            }
+            catch (SerializationException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+    }  // Class
+} // Namespace
