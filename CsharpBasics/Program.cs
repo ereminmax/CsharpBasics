@@ -450,6 +450,7 @@ namespace Posobie
         }
     }
 
+    [Serializable]
     class HistoricalEvent : IComparable//<HistoricalEvent>
     {
         private int year;           //год
@@ -659,7 +660,11 @@ namespace Posobie
                 Console.WriteLine("Введи номера событий, у которых хочешь узнать разницу во времени");
                 int firstEvent = int.Parse(Console.ReadLine());
                 int secondEvent = int.Parse(Console.ReadLine());
-                // Andrew Throelsen page 341
+
+                list.Add(new HistoricalEvent(3, "One", category.всероссийский));
+                list.Add(new HistoricalEvent(1, "Two", category.местный));
+                list.Add(new HistoricalEvent(3, "Three", category.всероссийский));
+                // Andrew Troelsen page 341
                 // Коллекцию в массив
                 ob = list.ToArray();
                 Console.WriteLine(getDifference(firstEvent, secondEvent));
@@ -670,13 +675,12 @@ namespace Posobie
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Ошибка в toDo: " + e.Message);
             }
         }
 
         private int getDifference(int firstEvent, int secondEvent)
         {
-            if (firstEvent == 0 || secondEvent == 0) throw new Exception("Забыл ввести одно из чисел");
             return Math.Abs(ob[firstEvent].getYear() - ob[secondEvent].getYear());
         }
 
@@ -692,25 +696,18 @@ namespace Posobie
 
         private void loadState()
         {
-            FileInfo file = new FileInfo(fileName);
-
-            if (!file.Exists)
-            {
-                file.Create();
-                list = new List<HistoricalEvent>();
-                return;
-            }
-
             try
             {
-                FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-                BinaryFormatter bf = new BinaryFormatter();
-                list = (List<HistoricalEvent>)bf.Deserialize(fs);
-                fs.Close();         
+                using (FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read))
+                {
+                    BinaryFormatter bf = new BinaryFormatter();
+                    list = new List<HistoricalEvent>();
+                    list = (List<HistoricalEvent>)bf.Deserialize(fs);
+                }       
             }
-            catch (SerializationException e)
+            catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Исключение в loadState: " + e.Message);
             }
         }
 
@@ -718,13 +715,15 @@ namespace Posobie
         {
             try
             {
-                FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                BinaryFormatter bf = new BinaryFormatter();
-                bf.Serialize(fs, list);
+                using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Write, FileShare.Write))
+                {
+                    BinaryFormatter bf = new BinaryFormatter();
+                    bf.Serialize(fs, list);
+                }
             }
-            catch (SerializationException e)
+            catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Ошибка в saveState: " + e.Message);
             }
         }
     }  // Class
